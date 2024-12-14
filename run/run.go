@@ -1,7 +1,6 @@
 package run
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -39,12 +38,10 @@ func Watch(command string, filePath string) <-chan Result {
 					doneChan <- true
 				}()
 
-				err := watchFile(filePath)
+				err := watchFiles([]string{filePath, "lib/nix"})
 				if err != nil {
-					fmt.Println(err)
+          panic(err)
 				}
-
-				fmt.Println("File has been changed")
 			}(doneChan)
 
 			<-doneChan
@@ -54,19 +51,33 @@ func Watch(command string, filePath string) <-chan Result {
 	return outChan
 }
 
-func watchFile(filePath string) error {
-	initialStat, err := os.Stat(filePath)
+func watchFiles(filePaths []string) error {
+	initialStatsMap, err := getStats(filePaths)
 	if err != nil {
 		return err
 	}
 
 	for {
-		stat, err := os.Stat(filePath)
+		statsMap, err := getStats(filePaths)
 		if err != nil {
 			return err
 		}
 
-		if stat.Size() != initialStat.Size() || stat.ModTime() != initialStat.ModTime() {
+		if len(statsMap) != len(initialStatsMap) {
+			break
+		}
+
+		var modified bool
+		for path, stat := range statsMap {
+			if initialStatsMap[path] == nil ||
+				initialStatsMap[path].Size() != stat.Size() ||
+				initialStatsMap[path].ModTime() != stat.ModTime() {
+				modified = true
+				break
+			}
+		}
+
+		if modified {
 			break
 		}
 
@@ -74,4 +85,35 @@ func watchFile(filePath string) error {
 	}
 
 	return nil
+}
+
+func getStats(filePaths []string) (map[string]os.FileInfo, error) {
+	statsMap := make(map[string]os.FileInfo)
+	for _, path := range filePaths {
+		initialStat, err := os.Stat(path)
+		if err != nil {
+			return nil, err
+		}
+
+		if initialStat.IsDir() {
+			entries, err := os.ReadDir(path)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, entry := range entries {
+				initialStat, err := os.Stat(path + "/" + entry.Name())
+				if err != nil {
+					return nil, err
+				}
+				if !initialStat.IsDir() {
+					statsMap[path+"/"+entry.Name()] = initialStat
+				}
+			}
+
+		} else {
+			statsMap[path] = initialStat
+		}
+	}
+	return statsMap, nil
 }
