@@ -15,6 +15,7 @@ var (
 	GreenBG = "\033[32;7m"
 	Yellow  = "\033[33;27m"
 	Blue    = "\033[34;27m"
+	BlueBG  = "\033[34;7m"
 	Purple  = "\033[35;27m"
 	Cyan    = "\033[36;27m"
 	Gray    = "\033[37;27m"
@@ -33,7 +34,7 @@ func main() {
 		printResult(run.Run(command), path, expectedOutputFilePath)
 	} else if subcommand == "watch" {
 		for result := range run.Watch(command, path) {
-      clearScreen()
+			clearScreen()
 			printResult(result, path, expectedOutputFilePath)
 		}
 	} else {
@@ -44,40 +45,43 @@ func main() {
 func printResult(result run.Result, path string, expectedOutputFilePath string) {
 	if result.Err != nil {
 		fmt.Println(Red + result.Out + result.Err.Error() + Reset)
+		return
+	}
+
+	expectedOutput := ""
+	content, err := os.ReadFile(expectedOutputFilePath)
+	if err == nil {
+		expectedOutput = string(content)
+	}
+
+	if expectedOutput == "" {
+		printBadge("NO EXP", path)
+		fmt.Println("\n\n" + result.Out)
+	} else if result.Out == expectedOutput {
+		printBadge("PASSED", path)
+		fmt.Println("\n\n" + result.Out)
 	} else {
-		expectedOutput := ""
-		content, err := os.ReadFile(expectedOutputFilePath)
-		if err == nil {
-			expectedOutput = string(content)
-		}
-		if expectedOutput == "" {
-			fmt.Println(result.Out)
-		} else if result.Out == expectedOutput {
-			printBadge(true, path)
-			fmt.Println("\n\n" + result.Out)
-		} else {
-			printBadge(false, path)
-			fmt.Println("\n\n" + "Got:\n" + result.Out + "\nExpected:\n" + expectedOutput)
-		}
+		printBadge("FAILED", path)
+		fmt.Println("\n\n" + "Got:\n" + result.Out + "\nExpected:\n" + expectedOutput)
 	}
 }
 
-func printBadge(success bool, path string) {
-	var text string
+func printBadge(text string, path string) {
 	var color string
 	var colorBG string
 
-	if success {
-		text = "PASSED"
+	if text == "PASSED" {
 		color = Green
 		colorBG = GreenBG
-	} else {
-		text = "FAILED"
+	} else if text == "FAILED" {
 		color = Red
 		colorBG = RedBG
+	} else {
+		color = Blue
+		colorBG = BlueBG
 	}
 
-	fmt.Printf("\n%s %s %s %s%s", colorBG, text, color, path, Reset)
+	fmt.Printf("%s %s %s %s%s", colorBG, text, color, path, Reset)
 }
 
 func clearScreen() {
