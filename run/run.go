@@ -25,10 +25,6 @@ func Watch(command string, dirPath string) <-chan Result {
 	outChan := make(chan Result)
 	go func() {
 		for {
-			cmd := exec.Command("clear")
-			cmd.Stdout = os.Stdout
-			cmd.Run()
-
 			outChan <- Run(command)
 
 			doneChan := make(chan bool)

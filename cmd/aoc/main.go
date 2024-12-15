@@ -4,6 +4,7 @@ import (
 	"aoc-cli/run"
 	"fmt"
 	"os"
+	"os/exec"
 )
 
 var (
@@ -32,6 +33,7 @@ func main() {
 		printResult(run.Run(command), path, expectedOutputFilePath)
 	} else if subcommand == "watch" {
 		for result := range run.Watch(command, path) {
+      clearScreen()
 			printResult(result, path, expectedOutputFilePath)
 		}
 	} else {
@@ -76,4 +78,11 @@ func printBadge(success bool, path string) {
 	}
 
 	fmt.Printf("\n%s %s %s %s%s", colorBG, text, color, path, Reset)
+}
+
+func clearScreen() {
+	cmd := exec.Command("clear")
+	cmd.Stdout = os.Stdout
+	cmd.Run()
+
 }
