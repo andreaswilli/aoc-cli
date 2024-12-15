@@ -21,7 +21,7 @@ func Run(command string) Result {
 	return Result{Out: string(outputByteArray), Err: err}
 }
 
-func Watch(command string, filePath string) <-chan Result {
+func Watch(command string, dirPath string) <-chan Result {
 	outChan := make(chan Result)
 	go func() {
 		for {
@@ -38,7 +38,7 @@ func Watch(command string, filePath string) <-chan Result {
 					doneChan <- true
 				}()
 
-				err := watchFiles([]string{filePath, "lib/nix"})
+				err := watchFiles([]string{dirPath, "lib/nix"})
 				if err != nil {
           panic(err)
 				}
