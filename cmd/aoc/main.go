@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sort"
+	"strings"
 )
 
 var (
@@ -19,33 +21,93 @@ var (
 	Purple  = "\033[35;27m"
 	Cyan    = "\033[36;27m"
 	Gray    = "\033[37;27m"
+	GrayBG  = "\033[37;7m"
 	White   = "\033[97;27m"
 )
 
 func main() {
 	subcommand := os.Args[1]
 	path := os.Args[2]
-	fileToRun := fmt.Sprintf("%s/solution.nix", path)
 
-	command := fmt.Sprintf("nix eval --quiet --experimental-features pipe-operator --extra-experimental-features nix-command --extra-experimental-features flakes --file %s", fileToRun)
+	if strings.Contains(path, "/") {
+		fileToRun := fmt.Sprintf("%s/solution.nix", path)
+		command := fmt.Sprintf("nix eval --quiet --experimental-features pipe-operator --extra-experimental-features nix-command --extra-experimental-features flakes --file %s", fileToRun)
 
-	if subcommand == "run" {
-		printResult(run.Run(command), path)
-	} else if subcommand == "watch" {
-		for result := range run.Watch(command, path) {
-			clearScreen()
-			printResult(result, path)
+		if subcommand == "run" {
+			printResult(run.Run(command), path, "all")
+		} else if subcommand == "watch" {
+			for result := range run.Watch(command, path) {
+				clearScreen()
+				printResult(result, path, "all")
+			}
+		} else {
+			fmt.Printf("Unknown subcommand '%s'\n", subcommand)
 		}
 	} else {
-		fmt.Printf("Unknown subcommand '%s'\n", subcommand)
+		// run all days in this directory
+		days, err := os.ReadDir(path)
+		if err != nil {
+			panic(err)
+		}
+
+		dayNames := make([]string, 0)
+		for _, day := range days {
+			dayNames = append(dayNames, path+"/"+day.Name())
+		}
+		if subcommand == "run" {
+			for _, day := range dayNames {
+				command := getCommand(day)
+				printResult(run.Run(command), day, "hide_successful")
+			}
+		} else if subcommand == "watch" {
+			resultsChan := make(chan map[string]run.Result)
+
+			resultsMap := make(map[string]run.Result)
+			for _, day := range dayNames {
+				resultsMap[day] = run.Result{}
+			}
+
+			for _, day := range dayNames {
+				command := getCommand(day)
+				go func() {
+					for result := range run.Watch(command, day) {
+						resultsMap[day] = result
+						resultsChan <- resultsMap
+					}
+				}()
+			}
+			for results := range resultsChan {
+				clearScreen()
+
+				keys := make([]string, 0)
+				for k := range results {
+					keys = append(keys, k)
+				}
+				sort.Strings(keys)
+				for _, day := range keys {
+					printResult(results[day], day, "hide_successful")
+				}
+			}
+		}
 	}
 }
 
-func printResult(result run.Result, path string) {
+func getCommand(day string) string {
+	fileToRun := fmt.Sprintf("%s/solution.nix", day)
+	return fmt.Sprintf("nix eval --quiet --experimental-features pipe-operator --extra-experimental-features nix-command --extra-experimental-features flakes --file %s", fileToRun)
+}
+
+func printResult(result run.Result, path string, details string) {
 	if result.Err != nil {
 		fmt.Println(Red + result.Out + result.Err.Error() + Reset)
 		return
 	}
+
+	if result.Out == "" {
+		printBadge(" EXEC ", path)
+		return
+	}
+
 	expectedOutputFilePath := fmt.Sprintf("%s/expected.txt", path)
 
 	expectedOutput := ""
@@ -56,13 +118,19 @@ func printResult(result run.Result, path string) {
 
 	if expectedOutput == "" {
 		printBadge("NO EXP", path)
-		fmt.Println("\n\n" + result.Out)
+		if details == "all" || details == "hide_successful" {
+			fmt.Println("\n" + result.Out)
+		}
 	} else if result.Out == expectedOutput {
 		printBadge("PASSED", path)
-		fmt.Println("\n\n" + result.Out)
+		if details == "all" {
+			fmt.Println("\n" + result.Out)
+		}
 	} else {
 		printBadge("FAILED", path)
-		fmt.Println("\n\n" + "Got:\n" + result.Out + "\nExpected:\n" + expectedOutput)
+		if details == "all" || details == "hide_successful" {
+			fmt.Println("\n" + "Got:\n" + result.Out + "\nExpected:\n" + expectedOutput)
+		}
 	}
 }
 
@@ -76,12 +144,15 @@ func printBadge(text string, path string) {
 	} else if text == "FAILED" {
 		color = Red
 		colorBG = RedBG
-	} else {
+	} else if text == "NO EXP" {
 		color = Blue
 		colorBG = BlueBG
+	} else {
+		color = Gray
+		colorBG = GrayBG
 	}
 
-	fmt.Printf("%s %s %s %s%s", colorBG, text, color, path, Reset)
+	fmt.Printf("%s %s %s %s%s\n", colorBG, text, color, path, Reset)
 }
 
 func clearScreen() {
