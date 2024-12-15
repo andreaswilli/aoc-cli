@@ -26,27 +26,27 @@ func main() {
 	subcommand := os.Args[1]
 	path := os.Args[2]
 	fileToRun := fmt.Sprintf("%s/solution.nix", path)
-	expectedOutputFilePath := fmt.Sprintf("%s/expected.txt", path)
 
 	command := fmt.Sprintf("nix eval --quiet --experimental-features pipe-operator --extra-experimental-features nix-command --extra-experimental-features flakes --file %s", fileToRun)
 
 	if subcommand == "run" {
-		printResult(run.Run(command), path, expectedOutputFilePath)
+		printResult(run.Run(command), path)
 	} else if subcommand == "watch" {
 		for result := range run.Watch(command, path) {
 			clearScreen()
-			printResult(result, path, expectedOutputFilePath)
+			printResult(result, path)
 		}
 	} else {
 		fmt.Printf("Unknown subcommand '%s'\n", subcommand)
 	}
 }
 
-func printResult(result run.Result, path string, expectedOutputFilePath string) {
+func printResult(result run.Result, path string) {
 	if result.Err != nil {
 		fmt.Println(Red + result.Out + result.Err.Error() + Reset)
 		return
 	}
+	expectedOutputFilePath := fmt.Sprintf("%s/expected.txt", path)
 
 	expectedOutput := ""
 	content, err := os.ReadFile(expectedOutputFilePath)
