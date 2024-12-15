@@ -22,24 +22,36 @@ func main() {
 	subcommand := os.Args[1]
 	path := os.Args[2]
 	fileToRun := fmt.Sprintf("%s/solution.nix", path)
+	expectedOutputFilePath := fmt.Sprintf("%s/expected.txt", path)
 
-	command := fmt.Sprintf("nix eval --experimental-features pipe-operator --extra-experimental-features nix-command --extra-experimental-features flakes --file %s", fileToRun)
+	command := fmt.Sprintf("nix eval --quiet --experimental-features pipe-operator --extra-experimental-features nix-command --extra-experimental-features flakes --file %s", fileToRun)
 
 	if subcommand == "run" {
-		printResult(run.Run(command))
+		printResult(run.Run(command), expectedOutputFilePath)
 	} else if subcommand == "watch" {
-		for result := range run.Watch(command, fileToRun) {
-			printResult(result)
+		for result := range run.Watch(command, path) {
+			printResult(result, expectedOutputFilePath)
 		}
 	} else {
 		fmt.Printf("Unknown subcommand '%s'\n", subcommand)
 	}
 }
 
-func printResult(result run.Result) {
+func printResult(result run.Result, expectedOutputFilePath string) {
 	if result.Err != nil {
 		fmt.Println(Red + result.Out + result.Err.Error() + Reset)
 	} else {
-		fmt.Println(result.Out)
+		expectedOutput := ""
+		content, err := os.ReadFile(expectedOutputFilePath)
+		if err == nil {
+			expectedOutput = string(content)
+		}
+		if expectedOutput == "" {
+			fmt.Println(result.Out)
+		} else if result.Out == expectedOutput {
+			fmt.Println(Green + result.Out + Reset)
+		} else {
+			fmt.Println(Red + "Got:\n" + result.Out + Green + "\nExpected:\n" + expectedOutput + Reset)
+		}
 	}
 }
