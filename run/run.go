@@ -25,6 +25,7 @@ func Watch(command string, dirPath string) <-chan Result {
 	outChan := make(chan Result)
 	go func() {
 		for {
+			outChan <- Result{}
 			outChan <- Run(command)
 
 			doneChan := make(chan bool)
@@ -36,7 +37,7 @@ func Watch(command string, dirPath string) <-chan Result {
 
 				err := watchFiles([]string{dirPath, "lib/nix"})
 				if err != nil {
-          panic(err)
+					panic(err)
 				}
 			}(doneChan)
 
