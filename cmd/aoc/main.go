@@ -34,7 +34,10 @@ func main() {
 		command := fmt.Sprintf("nix eval --quiet --experimental-features pipe-operator --extra-experimental-features nix-command --extra-experimental-features flakes --file %s", fileToRun)
 
 		if subcommand == "run" {
-			printResult(run.Run(command), path, "all")
+			printBadge(" EXEC ", path)
+			result := run.Run(command)
+			clearLine()
+			printResult(result, path, "all")
 		} else if subcommand == "watch" {
 			for result := range run.Watch(command, path) {
 				clearScreen()
@@ -56,8 +59,11 @@ func main() {
 		}
 		if subcommand == "run" {
 			for _, day := range dayNames {
+				printBadge(" EXEC ", day)
 				command := getCommand(day)
-				printResult(run.Run(command), day, "hide_successful")
+        result := run.Run(command)
+				clearLine()
+				printResult(result, day, "hide_successful")
 			}
 		} else if subcommand == "watch" {
 			resultsChan := make(chan map[string]run.Result)
@@ -105,6 +111,7 @@ func printResult(result run.Result, path string, details string) {
 
 	if result.Out == "" {
 		printBadge(" EXEC ", path)
+		fmt.Println()
 		return
 	}
 
@@ -118,16 +125,19 @@ func printResult(result run.Result, path string, details string) {
 
 	if expectedOutput == "" {
 		printBadge("NO EXP", path)
+		fmt.Println()
 		if details == "all" || details == "hide_successful" {
 			fmt.Println("\n" + result.Out)
 		}
 	} else if result.Out == expectedOutput {
 		printBadge("PASSED", path)
+		fmt.Println()
 		if details == "all" {
 			fmt.Println("\n" + result.Out)
 		}
 	} else {
 		printBadge("FAILED", path)
+		fmt.Println()
 		if details == "all" || details == "hide_successful" {
 			fmt.Println("\n" + "Got:\n" + result.Out + "\nExpected:\n" + expectedOutput)
 		}
@@ -152,12 +162,15 @@ func printBadge(text string, path string) {
 		colorBG = GrayBG
 	}
 
-	fmt.Printf("%s %s %s %s%s\n", colorBG, text, color, path, Reset)
+	fmt.Printf("%s %s %s %s%s", colorBG, text, color, path, Reset)
 }
 
 func clearScreen() {
 	cmd := exec.Command("clear")
 	cmd.Stdout = os.Stdout
 	cmd.Run()
+}
 
+func clearLine() {
+	fmt.Print("\r\033[K")
 }
