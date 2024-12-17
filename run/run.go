@@ -8,17 +8,20 @@ import (
 )
 
 type Result struct {
-	Out string
-	Err error
+	Out      string
+	Err      error
+	Duration time.Duration
 }
 
 func Run(command string) Result {
 	name := strings.Split(command, " ")
 	cmd := exec.Command(name[0], name[1:]...)
 
+	start := time.Now()
 	outputByteArray, err := cmd.CombinedOutput()
+	end := time.Now()
 
-	return Result{Out: string(outputByteArray), Err: err}
+	return Result{Out: string(outputByteArray), Err: err, Duration: end.Sub(start)}
 }
 
 func Watch(command string, dirPath string) <-chan Result {

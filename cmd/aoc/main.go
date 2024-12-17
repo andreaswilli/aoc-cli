@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"sort"
 	"strings"
+	"time"
 )
 
 var (
@@ -131,13 +132,13 @@ func printResult(result run.Result, path string, details string) {
 		}
 	} else if result.Out == expectedOutput {
 		printBadge("PASSED", path)
-		fmt.Println()
+		fmt.Printf(" (%s)\n", result.Duration.Round(10 * time.Microsecond))
 		if details == "all" {
 			fmt.Println("\n" + result.Out)
 		}
 	} else {
 		printBadge("FAILED", path)
-		fmt.Println()
+		fmt.Printf(" (%s)\n", result.Duration.Round(10 * time.Microsecond))
 		if details == "all" || details == "hide_successful" {
 			fmt.Println("\n" + "Got:\n" + result.Out + "\nExpected:\n" + expectedOutput)
 		}
