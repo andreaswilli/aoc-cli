@@ -126,7 +126,7 @@ func printResult(result run.Result, path string, details string) {
 
 	if expectedOutput == "" {
 		printBadge("NO EXP", path)
-		fmt.Println()
+		fmt.Printf(" (%s)\n", result.Duration.Round(10 * time.Microsecond))
 		if details == "all" || details == "hide_successful" {
 			fmt.Println("\n" + result.Out)
 		}
