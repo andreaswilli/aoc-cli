@@ -1,7 +1,10 @@
 package main
 
 import (
+	"aoc-cli/executor"
+	"aoc-cli/reporter"
 	"aoc-cli/run"
+	"aoc-cli/trigger"
 	"fmt"
 	"os"
 	"os/exec"
@@ -27,6 +30,16 @@ var (
 )
 
 func main() {
+	cmd := exec.Command("echo", "hello")
+	trigger := &trigger.OneShotTrigger{}
+
+	for result := range executor.Execute(cmd, trigger) {
+		status := reporter.Report(result.Out, "hello\n")
+		fmt.Printf("result: %s\n", status)
+	}
+}
+
+func main_2() {
 	subcommand := os.Args[1]
 	path := os.Args[2]
 
@@ -62,7 +75,7 @@ func main() {
 			for _, day := range dayNames {
 				printBadge(" EXEC ", day)
 				command := getCommand(day)
-        result := run.Run(command)
+				result := run.Run(command)
 				clearLine()
 				printResult(result, day, "hide_successful")
 			}
@@ -126,19 +139,19 @@ func printResult(result run.Result, path string, details string) {
 
 	if expectedOutput == "" {
 		printBadge("NO EXP", path)
-		fmt.Printf(" (%s)\n", result.Duration.Round(10 * time.Microsecond))
+		fmt.Printf(" (%s)\n", result.Duration.Round(10*time.Microsecond))
 		if details == "all" || details == "hide_successful" {
 			fmt.Println("\n" + result.Out)
 		}
 	} else if result.Out == expectedOutput {
 		printBadge("PASSED", path)
-		fmt.Printf(" (%s)\n", result.Duration.Round(10 * time.Microsecond))
+		fmt.Printf(" (%s)\n", result.Duration.Round(10*time.Microsecond))
 		if details == "all" {
 			fmt.Println("\n" + result.Out)
 		}
 	} else {
 		printBadge("FAILED", path)
-		fmt.Printf(" (%s)\n", result.Duration.Round(10 * time.Microsecond))
+		fmt.Printf(" (%s)\n", result.Duration.Round(10*time.Microsecond))
 		if details == "all" || details == "hide_successful" {
 			fmt.Println("\n" + "Got:\n" + result.Out + "\nExpected:\n" + expectedOutput)
 		}
