@@ -34,7 +34,7 @@ func main() {
 	trigger := &trigger.OneShotTrigger{}
 
 	for result := range executor.Execute(cmd, trigger) {
-		status := reporter.Report(result.Out, "hello\n")
+		status := reporter.GetReport(result.Out, "hello\n")
 		fmt.Printf("result: %s\n", status)
 	}
 }

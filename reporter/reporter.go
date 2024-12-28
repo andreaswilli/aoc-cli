@@ -8,12 +8,19 @@ const (
 	StatusNoExp  Status = "NO EXP"
 )
 
-func Report(actual string, expected string) (status Status) {
+type Report struct {
+	Actual   string
+	Expected string
+	Status   Status
+}
+
+func GetReport(actual string, expected string) (report Report) {
+	report = Report{actual, expected, StatusFailed}
+
 	if len(expected) == 0 {
-		return StatusNoExp
+		report.Status = StatusNoExp
+	} else if actual == expected {
+		report.Status = StatusPassed
 	}
-	if actual == expected {
-		return StatusPassed
-	}
-	return StatusFailed
+	return
 }

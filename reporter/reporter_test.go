@@ -2,32 +2,49 @@ package reporter_test
 
 import (
 	"aoc-cli/reporter"
-	"fmt"
+	"reflect"
 	"testing"
 )
 
-func TestReport(t *testing.T) {
+func TestGetReport(t *testing.T) {
 	cases := []struct {
+		name   string
 		got    string
 		want   string
-		status reporter.Status
+		report reporter.Report
 	}{
-		{"the result", "", reporter.StatusNoExp},
-		{"the result", "the result", reporter.StatusPassed},
-		{"the wrong result", "the result", reporter.StatusFailed},
+		{
+			"report no exp if expectation is empty and result is present",
+			"the result",
+			"",
+			reporter.Report{"the result", "", reporter.StatusNoExp},
+		},
+		{
+			"report no exp if expectation is empty and result is empty",
+			"",
+			"",
+			reporter.Report{"", "", reporter.StatusNoExp},
+		},
+		{
+			"report success if expectation matches the result",
+			"the result",
+			"the result",
+			reporter.Report{"the result", "the result", reporter.StatusPassed},
+		},
+		{
+			"report failure if expectation does not match the result",
+			"the wrong result",
+			"the result",
+			reporter.Report{"the wrong result", "the result", reporter.StatusFailed},
+		},
 	}
 
 	for _, c := range cases {
-		t.Run(fmt.Sprintf(
-			"report %q for actual=%q and expected=%q",
-			c.status,
-			c.got,
-			c.want,
-		), func(t *testing.T) {
-			status := reporter.Report(c.got, c.want)
+		t.Run(c.name, func(t *testing.T) {
+			report := reporter.GetReport(c.got, c.want)
 
-			if status != c.status {
-				t.Errorf("Expected %s but got %s", c.status, status)
+			if !reflect.DeepEqual(report, c.report) {
+				t.Errorf("Expected %s but got %s", c.report, report)
 			}
 		})
 	}
