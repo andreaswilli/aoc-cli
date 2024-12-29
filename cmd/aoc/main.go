@@ -1,6 +1,7 @@
 package main
 
 import (
+	"aoc-cli/cli"
 	"aoc-cli/executor"
 	"aoc-cli/reporter"
 	"aoc-cli/run"
@@ -32,10 +33,25 @@ var (
 func main() {
 	cmd := exec.Command("echo", "hello")
 	trigger := &trigger.OneShotTrigger{}
+  CLI := cli.CLI{Out: os.Stdout}
+  reports := cli.ReportMap{}
 
 	for result := range executor.Execute(cmd, trigger) {
-		status := reporter.GetReport(result.Out, "hello\n")
-		fmt.Printf("result: %s\n", status)
+		report := reporter.GetReport(result, "hello\n")
+    reports["passed"] = report;
+    CLI.PrintReports(reports, cli.HidePassed)
+	}
+
+	for result := range executor.Execute(cmd, trigger) {
+		report := reporter.GetReport(result, "helloo\n")
+    reports["failed"] = report;
+    CLI.PrintReports(reports, cli.HidePassed)
+	}
+
+	for result := range executor.Execute(cmd, trigger) {
+		report := reporter.GetReport(result, "")
+    reports["noexp"] = report;
+    CLI.PrintReports(reports, cli.HideNone)
 	}
 }
 

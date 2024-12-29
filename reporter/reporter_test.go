@@ -1,51 +1,67 @@
 package reporter_test
 
 import (
+	"aoc-cli/executor"
 	"aoc-cli/reporter"
-	"reflect"
+	"errors"
 	"testing"
+	"time"
 )
 
 func TestGetReport(t *testing.T) {
 	cases := []struct {
-		name   string
-		got    string
-		want   string
-		report reporter.Report
+		name           string
+		inResult       *executor.Result
+		want           string
+		expectedStatus reporter.Status
 	}{
 		{
 			"report no exp if expectation is empty and result is present",
-			"the result",
+			createSuccessResult("the result"),
 			"",
-			reporter.Report{"the result", "", reporter.StatusNoExp},
+			reporter.StatusNoExp,
 		},
 		{
 			"report no exp if expectation is empty and result is empty",
+			createSuccessResult(""),
 			"",
-			"",
-			reporter.Report{"", "", reporter.StatusNoExp},
+			reporter.StatusNoExp,
 		},
 		{
 			"report success if expectation matches the result",
+			createSuccessResult("the result"),
 			"the result",
-			"the result",
-			reporter.Report{"the result", "the result", reporter.StatusPassed},
+			reporter.StatusPassed,
 		},
 		{
 			"report failure if expectation does not match the result",
-			"the wrong result",
+			createSuccessResult("the wrong result"),
 			"the result",
-			reporter.Report{"the wrong result", "the result", reporter.StatusFailed},
+			reporter.StatusFailed,
+		},
+		{
+			"report failure if command fails but output matches",
+			createFailureResult("the failed result", errors.New("error output")),
+			"the failed result",
+			reporter.StatusFailed,
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			report := reporter.GetReport(c.got, c.want)
+			report := reporter.GetReport(c.inResult, c.want)
 
-			if !reflect.DeepEqual(report, c.report) {
-				t.Errorf("Expected %s but got %s", c.report, report)
+			if report.Status != c.expectedStatus {
+				t.Errorf("Expected %s but got %s", c.expectedStatus, report.Status)
 			}
 		})
 	}
+}
+
+func createSuccessResult(out string) *executor.Result {
+	return &executor.Result{Out: out, Err: nil, Duration: time.Millisecond}
+}
+
+func createFailureResult(out string, err error) *executor.Result {
+	return &executor.Result{Out: out, Err: err, Duration: time.Millisecond}
 }

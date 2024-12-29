@@ -1,5 +1,7 @@
 package reporter
 
+import "aoc-cli/executor"
+
 type Status string
 
 const (
@@ -9,17 +11,21 @@ const (
 )
 
 type Report struct {
-	Actual   string
+	Result   *executor.Result
 	Expected string
 	Status   Status
 }
 
-func GetReport(actual string, expected string) (report Report) {
-	report = Report{actual, expected, StatusFailed}
+func GetReport(result *executor.Result, expected string) (report Report) {
+	report = Report{result, expected, StatusFailed}
+
+  if result.Err != nil {
+    return
+  }
 
 	if len(expected) == 0 {
 		report.Status = StatusNoExp
-	} else if actual == expected {
+	} else if result.Out == expected {
 		report.Status = StatusPassed
 	}
 	return
