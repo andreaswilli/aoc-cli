@@ -19,15 +19,32 @@ func TestExecute(t *testing.T) {
 		{
 			"get output value",
 			exec.Command("echo", "hello"),
-			[]*executor.Result{{Out: "hello", Err: nil}},
+			[]*executor.Result{
+				{
+					Pending: true,
+					Out:     "",
+					Err:     nil,
+				},
+				{
+					Pending: false,
+					Out:     "hello",
+					Err:     nil,
+				}},
 		},
 		{
 			"get output error",
 			exec.Command("ls", "nonexistent"),
-			[]*executor.Result{{
-				Out: "ls: nonexistent: No such file or directory",
-				Err: errors.New("exit status 1"),
-			}},
+			[]*executor.Result{
+				{
+					Pending: true,
+					Out:     "",
+					Err:     nil,
+				},
+				{
+					Pending: false,
+					Out:     "ls: nonexistent: No such file or directory",
+					Err:     errors.New("exit status 1"),
+				}},
 		},
 	}
 
@@ -39,9 +56,9 @@ func TestExecute(t *testing.T) {
 			for result := range executor.Execute(c.cmd, trigger) {
 				results = append(results, result)
 
-        if len(results) > len(c.results) {
-          t.Fatalf("Expected %d results, got %d", len(c.results), len(results))
-        }
+				if len(results) > len(c.results) {
+					t.Fatalf("Expected %d results, got %d", len(c.results), len(results))
+				}
 			}
 
 			assertEqual(t, len(results), len(c.results))
@@ -55,9 +72,13 @@ func TestExecute(t *testing.T) {
 					assertEqual(t, results[i].Err.Error(), c.results[i].Err.Error())
 				}
 
-        if results[i].Duration == 0 {
-          t.Errorf("Expected duration to be greater than 0")
-        }
+				if results[i].Pending && results[i].Duration != 0 {
+					t.Errorf("Expected duration of pending result to be 0")
+				}
+
+				if !results[i].Pending && results[i].Duration == 0 {
+					t.Errorf("Expected duration to be greater than 0")
+				}
 			}
 		})
 	}

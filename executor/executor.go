@@ -7,6 +7,7 @@ import (
 )
 
 type Result struct {
+	Pending  bool
 	Out      string
 	Err      error
 	Duration time.Duration
@@ -17,19 +18,26 @@ func Execute(cmd *exec.Cmd, trigger trigger.Trigger) chan *Result {
 
 	go func() {
 		for range trigger.Listen() {
-     // commands can only run once
-      clonedCmd := *cmd
+			outChan <- &Result{
+				Pending:  true,
+				Out:      "",
+				Err:      nil,
+				Duration: 0,
+			}
+
+			// commands can only run once
+			clonedCmd := *cmd
 
 			start := time.Now()
 			outputByteArray, err := clonedCmd.CombinedOutput()
 			end := time.Now()
 
-			result := &Result{
-				Out: string(outputByteArray),
-				Err: err,
+			outChan <- &Result{
+				Pending:  false,
+				Out:      string(outputByteArray),
+				Err:      err,
 				Duration: end.Sub(start),
 			}
-			outChan <- result
 		}
 		close(outChan)
 	}()

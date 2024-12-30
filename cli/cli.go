@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"aoc-cli/executor"
 	"aoc-cli/reporter"
+	"aoc-cli/runner"
 	"io"
 	"sort"
 	"strings"
@@ -23,17 +25,16 @@ const (
 	GreenBG    = "\033[32;7m"
 	Blue       = "\033[34;27m"
 	BlueBG     = "\033[34;7m"
+	White      = "\033[97;27m"
+	WhiteBG    = "\033[97;7m"
 	Gray       = "\033[37;27m"
-	GrayBG     = "\033[37;7m"
 )
 
 type CLI struct {
 	Out io.Writer
 }
 
-type ReportMap map[string]reporter.Report
-
-func (c *CLI) PrintReports(reports ReportMap, hideLevel HideLevel) {
+func (c *CLI) PrintReports(reports runner.ReportMap, hideLevel HideLevel) {
 	output := ""
 
 	for _, path := range sortedPaths(reports) {
@@ -43,14 +44,16 @@ func (c *CLI) PrintReports(reports ReportMap, hideLevel HideLevel) {
 			output += RedBG + " FAILED " + Red
 		} else if reports[path].Status == reporter.StatusNoExp {
 			output += BlueBG + " NO EXP " + Blue
+		} else if reports[path].Status == reporter.StatusExec {
+			output += WhiteBG + "  EXEC  " + White
 		}
 		output += " " + path + "\n" + ResetColor
-		output += printDetails(hideLevel, reports[path].Result.Out, reports[path].Expected)
+		output += printDetails(hideLevel, reports[path].Result, reports[path].Expected)
 	}
 	c.Out.Write([]byte(output))
 }
 
-func sortedPaths(reports ReportMap) []string {
+func sortedPaths(reports runner.ReportMap) []string {
 	paths := make([]string, 0, len(reports))
 
 	for path := range reports {
@@ -60,21 +63,26 @@ func sortedPaths(reports ReportMap) []string {
 	return paths
 }
 
-func printDetails(hideLevel HideLevel, actual string, expected string) string {
-	output := ""
-
-	if hideLevel >= HidePassed && expected != "" && expected != actual {
+func printDetails(
+	hideLevel HideLevel,
+	result *executor.Result,
+	expected string,
+) (output string) {
+  if result.Pending {
+    return
+  }
+	if hideLevel >= HidePassed && expected != "" && expected != result.Out {
 		output += "\nExpected:\n" + expected
 		output += newlineIfNeeded(output)
-		output += "\nGot:\n" + actual
+		output += "\nGot:\n" + result.Out
 		output += newlineIfNeeded(output)
 		output += "\n"
 	} else if hideLevel == HideNone || hideLevel == HidePassed && expected == "" {
-		output += "\n" + actual
+		output += "\n" + result.Out
 		output += newlineIfNeeded(output)
 		output += "\n"
 	}
-	return output
+	return
 }
 
 func newlineIfNeeded(s string) string {

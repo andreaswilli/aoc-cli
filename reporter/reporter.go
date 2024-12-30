@@ -8,6 +8,7 @@ const (
 	StatusPassed Status = "PASSED"
 	StatusFailed Status = "FAILED"
 	StatusNoExp  Status = "NO EXP"
+	StatusExec   Status = "EXEC"
 )
 
 type Report struct {
@@ -19,9 +20,14 @@ type Report struct {
 func GetReport(result *executor.Result, expected string) (report Report) {
 	report = Report{result, expected, StatusFailed}
 
-  if result.Err != nil {
-    return
-  }
+	if result.Err != nil {
+		return
+	}
+
+	if result.Pending {
+		report.Status = StatusExec
+		return
+	}
 
 	if len(expected) == 0 {
 		report.Status = StatusNoExp

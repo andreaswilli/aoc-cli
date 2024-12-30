@@ -45,6 +45,12 @@ func TestGetReport(t *testing.T) {
 			"the failed result",
 			reporter.StatusFailed,
 		},
+    {
+      "report exec if result is pending",
+      createPendingResult(),
+      "the result",
+      reporter.StatusExec,
+    },
 	}
 
 	for _, c := range cases {
@@ -59,9 +65,28 @@ func TestGetReport(t *testing.T) {
 }
 
 func createSuccessResult(out string) *executor.Result {
-	return &executor.Result{Out: out, Err: nil, Duration: time.Millisecond}
+  return &executor.Result{
+  	Pending: false,
+  	Out: out,
+  	Err: nil,
+  	Duration: time.Millisecond,
+  }
 }
 
 func createFailureResult(out string, err error) *executor.Result {
-	return &executor.Result{Out: out, Err: err, Duration: time.Millisecond}
+	return &executor.Result{
+  	Pending: false,
+		Out: out,
+		Err: err,
+		Duration: time.Millisecond,
+	}
+}
+
+func createPendingResult() *executor.Result {
+  return &executor.Result{
+  	Pending: true,
+  	Out: "",
+  	Err: nil,
+  	Duration: 0,
+  }
 }
