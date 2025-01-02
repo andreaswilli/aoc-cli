@@ -36,7 +36,7 @@ func TestRun(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			r := runner.Runner{FS: mapFS}
+			r := runner.NewRunner(mapFS, "solution.nix")
 
 			reportChan, err := r.Run(c.path)
 
@@ -44,9 +44,8 @@ func TestRun(t *testing.T) {
 				t.Fatalf("Unexpected error: %v", err)
 			}
 
-			var got []*runner.ReportMap
+			var got []runner.ReportMap
 			for reportMap := range reportChan {
-				t.Logf("%+v", reportMap)
 				got = append(got, reportMap)
 			}
 
