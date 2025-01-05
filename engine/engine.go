@@ -1,59 +1,25 @@
 package engine
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
-	"io/fs"
+	"os/exec"
+	"strings"
 )
 
-type Config struct {
-	Engines []*Engine `json:"engines"`
-}
-
 type Engine struct {
-	Name string `json:"name"`
-	Cmd  string `json:"cmd"`
+	Name      string `json:"name"`
+	Cmd       string `json:"cmd"`
+	EntryFile string `json:"entryFile"`
 }
 
-type EngineManager struct {
-	engines map[string]*Engine
-}
+func (e *Engine) GetCmd(path string) (*exec.Cmd, error) {
+  cmdStr := strings.ReplaceAll(e.Cmd, "{{entryFile}}", path + "/" + e.EntryFile)
+  binary := strings.Split(cmdStr, " ")[0]
+  args := strings.Split(cmdStr, " ")[1:]
 
-func NewEngineManager(fsys fs.FS) (*EngineManager, error) {
-	config := Config{}
-	jsonBytes, err := fs.ReadFile(fsys, "aoc-cli.json")
+  if binary == "" {
+    return nil, errors.New("invalid command")
+  }
 
-	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return nil, errors.New(
-				"'aoc-cli.json' not found, it must exist in the root of your project",
-			)
-		}
-		return nil, err
-	}
-
-	json.Unmarshal(jsonBytes, &config)
-
-	if len(config.Engines) == 0 {
-		return nil, errors.New("no engines are defined in 'aoc-cli.json'")
-	}
-
-	engines := make(map[string]*Engine)
-
-	for _, engine := range config.Engines {
-		engines[engine.Name] = engine
-	}
-
-	return &EngineManager{engines: engines}, nil
-}
-
-func (em *EngineManager) Get(name string) (*Engine, error) {
-	engine, ok := em.engines[name]
-
-	if !ok {
-		return nil, fmt.Errorf("engine %q not found", name)
-	}
-
-	return engine, nil
+	return exec.Command(binary, args...), nil
 }

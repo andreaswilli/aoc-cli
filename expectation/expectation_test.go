@@ -18,12 +18,12 @@ func TestGetExpectation(t *testing.T) {
 	}{
 		{
 			"return empty string if there is no expectation",
-			"2024/day_01/",
+			"2024/day_01",
 			"",
 		},
 		{
 			"return file content if there is an expectation",
-			"2024/day_02/",
+			"2024/day_02",
 			"expected result",
 		},
 	}

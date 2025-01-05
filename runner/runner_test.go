@@ -1,6 +1,8 @@
 package runner_test
 
 import (
+	"aoc-cli/engine"
+	"aoc-cli/reporter"
 	"aoc-cli/runner"
 	"testing"
 	"testing/fstest"
@@ -8,36 +10,65 @@ import (
 
 var mapFS = fstest.MapFS{
 	"2024/day_01/solution.nix": &fstest.MapFile{},
+	"2024/day_01/expected.txt": &fstest.MapFile{Data: []byte("HelloWorld!\n")},
 	"2024/day_02/solution.nix": &fstest.MapFile{},
+	"2024/day_02/expected.txt": &fstest.MapFile{Data: []byte("Something else")},
 	"2024/day_03/other.nix":    &fstest.MapFile{},
+	"2024/unrelated-file.txt":  &fstest.MapFile{},
+}
+
+var mapFSEngines = fstest.MapFS{
+	"aoc-cli.json": &fstest.MapFile{
+		Data: []byte(`{"engines":[
+      {
+        "name": "echo",
+        "cmd": "echo HelloWorld!",
+        "entryFile": "solution.nix"
+      }
+    ]}`),
+	},
 }
 
 func TestRun(t *testing.T) {
 	cases := []struct {
-		name string
-		path string
-		want []*runner.ReportMap
+		name         string
+		path         string
+		numReports   int
+		wantStatuses map[string]reporter.Status
 	}{
 		{
-			"single test case exists",
+			"single day is runnable",
 			"2024/day_01",
-			[]*runner.ReportMap{{}, {}},
+			2,
+			map[string]reporter.Status{
+				"2024/day_01": reporter.StatusPassed,
+			},
 		},
 		{
-			"single test case does not exist",
+			"single day is not runnable",
 			"2024/day_03",
-			[]*runner.ReportMap{},
+			0,
+			nil,
 		},
 		{
-			"two test cases exist",
+			"two days are runnable",
 			"2024",
-			[]*runner.ReportMap{{}, {}, {}, {}},
+			4,
+			map[string]reporter.Status{
+				"2024/day_01": reporter.StatusPassed,
+				"2024/day_02": reporter.StatusFailed,
+			},
 		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			r := runner.NewRunner(mapFS, "solution.nix")
+			em, err := engine.NewEngineManager(mapFSEngines)
 
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+
+			r := runner.NewRunner(mapFS, em)
 			reportChan, err := r.Run(c.path)
 
 			if err != nil {
@@ -49,8 +80,17 @@ func TestRun(t *testing.T) {
 				got = append(got, reportMap)
 			}
 
-			if len(got) != len(c.want) {
-				t.Errorf("Want %d report maps, got %d", len(c.want), len(got))
+			if len(got) != c.numReports {
+				t.Errorf("Want %d report maps, got %d", c.numReports, len(got))
+			}
+
+			if c.numReports > 0 {
+				finalReport := got[len(got)-1]
+				for path, wantStatus := range c.wantStatuses {
+					if finalReport[path].Status != wantStatus {
+						t.Errorf("Want status %v, got %v", wantStatus, finalReport[path].Status)
+					}
+				}
 			}
 		})
 	}

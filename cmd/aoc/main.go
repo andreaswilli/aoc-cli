@@ -2,6 +2,7 @@ package main
 
 import (
 	"aoc-cli/cli"
+	"aoc-cli/engine"
 	"aoc-cli/run"
 	"aoc-cli/runner"
 	"fmt"
@@ -31,7 +32,13 @@ var (
 func main() {
 	CLI := cli.CLI{Out: os.Stdout}
 	filesystem := os.DirFS(".")
-	r := runner.NewRunner(filesystem, "solution.nix")
+  engineManager, err := engine.NewEngineManager(filesystem)
+
+	if err != nil {
+		fmt.Printf("Engine error: %v", err)
+	}
+
+	r := runner.NewRunner(filesystem, engineManager)
 
 	reportChan, err := r.Run("2024")
 

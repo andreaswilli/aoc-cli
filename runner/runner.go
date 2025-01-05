@@ -1,12 +1,12 @@
 package runner
 
 import (
+	"aoc-cli/engine"
 	"aoc-cli/executor"
 	"aoc-cli/expectation"
 	"aoc-cli/reporter"
 	"aoc-cli/trigger"
 	"io/fs"
-	"os/exec"
 	"strings"
 	"sync"
 )
@@ -14,17 +14,17 @@ import (
 type ReportMap map[string]reporter.Report
 
 type Runner struct {
-	FS           fs.FS
-	SourceSuffix string
+	FS            fs.FS
+	EngineManager *engine.EngineManager
 }
 
-func NewRunner(fsys fs.FS, sourceSuffix string) Runner {
-	return Runner{FS: fsys, SourceSuffix: sourceSuffix}
+func NewRunner(fsys fs.FS, engineManager *engine.EngineManager) Runner {
+	return Runner{FS: fsys, EngineManager: engineManager}
 }
 
 func (r Runner) Run(path string) (reportChan chan ReportMap, err error) {
 	reportChan = make(chan ReportMap)
-	items, err := r.getMatches(path)
+	dirs, err := r.getDirs(path)
 
 	if err != nil {
 		close(reportChan)
@@ -35,20 +35,39 @@ func (r Runner) Run(path string) (reportChan chan ReportMap, err error) {
 	mutex := &sync.Mutex{}
 
 	wg := &sync.WaitGroup{}
-	wg.Add(len(items))
+	wg.Add(len(dirs))
 
-	for _, item := range items {
-		cmd := exec.Command("nix", "eval", "--quiet", "--experimental-features", "pipe-operator", "--extra-experimental-features", "nix-command", "--extra-experimental-features", "flakes", "--file", item)
+	for _, dir := range dirs {
+		subFS, subErr := fs.Sub(r.FS, dir)
+
+		if subErr != nil {
+			wg.Done()
+			continue
+		}
+
+		engine := r.EngineManager.FindAppropriateEngine(subFS)
+
+		if engine == nil {
+			wg.Done()
+			continue
+		}
+
+		cmd, cmdErr := engine.GetCmd(dir)
+
+		if cmdErr != nil {
+			close(reportChan)
+			return reportChan, cmdErr
+		}
+
 		go func() {
 			defer wg.Done()
 			for result := range executor.Execute(cmd, &trigger.OneShotTrigger{}) {
-				dir := strings.TrimSuffix(item, r.SourceSuffix)
 				expected := expectation.GetExpectation(dir, r.FS)
 
 				report := reporter.GetReport(result, expected)
 
 				mutex.Lock()
-				reportMap[item] = report
+				reportMap[dir] = report
 				mutex.Unlock()
 
 				reportChan <- reportMap
@@ -63,18 +82,23 @@ func (r Runner) Run(path string) (reportChan chan ReportMap, err error) {
 	return
 }
 
-func (r Runner) getMatches(path string) ([]string, error) {
-	items, err := fs.Glob(r.FS, path+"/"+r.SourceSuffix)
-
-	if err != nil {
-		return []string{}, err
+func (r Runner) getDirs(path string) ([]string, error) {
+	if strings.Contains(path, "/") {
+		return []string{path}, nil
 	}
 
-	nestedItems, err := fs.Glob(r.FS, path+"/**/"+r.SourceSuffix)
+	dirEntries, err := fs.ReadDir(r.FS, path)
 
 	if err != nil {
-		return []string{}, err
+		return nil, err
 	}
 
-	return append(items, nestedItems...), nil
+	dirs := []string{}
+	for _, dirEntry := range dirEntries {
+		if dirEntry.IsDir() {
+			dirs = append(dirs, path+"/"+dirEntry.Name())
+		}
+	}
+
+	return dirs, nil
 }
