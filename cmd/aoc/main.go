@@ -55,7 +55,6 @@ func main() {
 		reportMap[report.Path] = *report
 		CLI.PrintReports(reportMap, cli.HidePassed)
 		mutex.Unlock()
-		fmt.Println("=========")
 	}
 }
 

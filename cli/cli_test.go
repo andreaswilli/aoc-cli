@@ -8,6 +8,8 @@ import (
 	"bytes"
 	"testing"
 	"time"
+
+	"github.com/charmbracelet/x/ansi"
 )
 
 var (
@@ -38,6 +40,8 @@ var (
 	}
 )
 
+var reportStart = "\n" + ansi.CursorUp(0) + ansi.EraseDisplay(0)
+
 func TestCLI_PrintReports(t *testing.T) {
 	cases := []struct {
 		name      string
@@ -49,13 +53,15 @@ func TestCLI_PrintReports(t *testing.T) {
 			"print one successful report",
 			runner.ReportMap{"2024/day_01": successfulReport},
 			cli.HidePassed,
-			cli.GreenBG + " PASSED " + cli.Green + " 2024/day_01\n" + cli.ResetColor,
+			reportStart +
+				cli.GreenBG + " PASSED " + cli.Green + " 2024/day_01\n" + cli.ResetColor,
 		},
 		{
 			"print no additional newline if the result already ends in one",
 			runner.ReportMap{"2024/day_02": failedReportWithNewlines},
 			cli.HidePassed,
-			cli.RedBG + " FAILED " + cli.Red + " 2024/day_02\n" + cli.ResetColor +
+			reportStart +
+				cli.RedBG + " FAILED " + cli.Red + " 2024/day_02\n" + cli.ResetColor +
 				"\nExpected:\nthe result\n\nGot:\nthe wrong result\n\n",
 		},
 		{
@@ -67,7 +73,8 @@ func TestCLI_PrintReports(t *testing.T) {
 				"2024/day_02": failedReport,
 			},
 			cli.HideAll,
-			cli.GreenBG + " PASSED " + cli.Green + " 2024/day_01\n" + cli.ResetColor +
+			reportStart +
+				cli.GreenBG + " PASSED " + cli.Green + " 2024/day_01\n" + cli.ResetColor +
 				cli.RedBG + " FAILED " + cli.Red + " 2024/day_02\n" + cli.ResetColor +
 				cli.BlueBG + " NO EXP " + cli.Blue + " 2024/day_03\n" + cli.ResetColor +
 				cli.WhiteBG + "  EXEC  " + cli.White + " 2024/day_04\n" + cli.ResetColor,
@@ -81,7 +88,8 @@ func TestCLI_PrintReports(t *testing.T) {
 				"2024/day_02": failedReport,
 			},
 			cli.HidePassed,
-			cli.GreenBG + " PASSED " + cli.Green + " 2024/day_01\n" + cli.ResetColor +
+			reportStart +
+				cli.GreenBG + " PASSED " + cli.Green + " 2024/day_01\n" + cli.ResetColor +
 				cli.RedBG + " FAILED " + cli.Red + " 2024/day_02\n" + cli.ResetColor +
 				"\nExpected:\nthe result\n\nGot:\nthe wrong result\n\n" +
 				cli.BlueBG + " NO EXP " + cli.Blue + " 2024/day_03\n" + cli.ResetColor +
@@ -97,7 +105,8 @@ func TestCLI_PrintReports(t *testing.T) {
 				"2024/day_02": failedReport,
 			},
 			cli.HideNone,
-			cli.GreenBG + " PASSED " + cli.Green + " 2024/day_01\n" + cli.ResetColor +
+			reportStart +
+				cli.GreenBG + " PASSED " + cli.Green + " 2024/day_01\n" + cli.ResetColor +
 				"\nthe result\n\n" +
 				cli.RedBG + " FAILED " + cli.Red + " 2024/day_02\n" + cli.ResetColor +
 				"\nExpected:\nthe result\n\nGot:\nthe wrong result\n\n" +

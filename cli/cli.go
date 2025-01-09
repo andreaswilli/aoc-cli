@@ -7,6 +7,8 @@ import (
 	"io"
 	"sort"
 	"strings"
+
+	"github.com/charmbracelet/x/ansi"
 )
 
 type HideLevel int
@@ -31,11 +33,14 @@ const (
 )
 
 type CLI struct {
-	Out io.Writer
+	Out          io.Writer
+	writtenLines int
 }
 
 func (c *CLI) PrintReports(reports runner.ReportMap, hideLevel HideLevel) {
-	output := ""
+	output := "\n"
+	output += ansi.CursorUp(c.writtenLines)
+	output += ansi.EraseDisplay(0)
 
 	for _, path := range sortedPaths(reports) {
 		if reports[path].Status == reporter.StatusPassed {
@@ -50,6 +55,8 @@ func (c *CLI) PrintReports(reports runner.ReportMap, hideLevel HideLevel) {
 		output += " " + path + "\n" + ResetColor
 		output += printDetails(hideLevel, reports[path].Result, reports[path].Expected)
 	}
+
+	c.writtenLines = strings.Count(output, "\n")
 	c.Out.Write([]byte(output))
 }
 
@@ -68,9 +75,9 @@ func printDetails(
 	result *executor.Result,
 	expected string,
 ) (output string) {
-  if result.Pending {
-    return
-  }
+	if result.Pending {
+		return
+	}
 	if hideLevel >= HidePassed && expected != "" && expected != result.Out {
 		output += "\nExpected:\n" + expected
 		output += newlineIfNeeded(output)
