@@ -4,6 +4,7 @@ import (
 	"aoc-cli/executor"
 	"aoc-cli/reporter"
 	"errors"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -55,11 +56,9 @@ func TestGetReport(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			report := reporter.GetReport(c.inResult, c.want)
-
-			if report.Status != c.expectedStatus {
-				t.Errorf("Expected %s but got %s", c.expectedStatus, report.Status)
-			}
+			report := reporter.GetReport("2024/day_01", c.inResult, c.want)
+      assertEqual(t, report.Path, "2024/day_01")
+      assertEqual(t, report.Status, c.expectedStatus)
 		})
 	}
 }
@@ -89,4 +88,11 @@ func createPendingResult() *executor.Result {
   	Err: nil,
   	Duration: 0,
   }
+}
+
+func assertEqual[T comparable](t *testing.T, got, want T) {
+	t.Helper()
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("Expected '%v' but got '%v'", want, got)
+	}
 }

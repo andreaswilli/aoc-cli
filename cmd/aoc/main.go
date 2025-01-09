@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -32,7 +33,7 @@ var (
 func main() {
 	CLI := cli.CLI{Out: os.Stdout}
 	filesystem := os.DirFS(".")
-  engineManager, err := engine.NewEngineManager(filesystem)
+	engineManager, err := engine.NewEngineManager(filesystem)
 
 	if err != nil {
 		fmt.Printf("Engine error: %v", err)
@@ -46,8 +47,14 @@ func main() {
 		fmt.Printf("Unexpected error: %v", err)
 	}
 
-	for reports := range reportChan {
-		CLI.PrintReports(reports, cli.HidePassed)
+	reportMap := runner.ReportMap{}
+	mutex := &sync.Mutex{}
+
+	for report := range reportChan {
+		mutex.Lock()
+		reportMap[report.Path] = *report
+		CLI.PrintReports(reportMap, cli.HidePassed)
+		mutex.Unlock()
 		fmt.Println("=========")
 	}
 }

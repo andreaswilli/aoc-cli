@@ -4,6 +4,7 @@ import (
 	"aoc-cli/engine"
 	"aoc-cli/reporter"
 	"aoc-cli/runner"
+	"sync"
 	"testing"
 	"testing/fstest"
 )
@@ -75,20 +76,25 @@ func TestRun(t *testing.T) {
 				t.Fatalf("Unexpected error: %v", err)
 			}
 
-			var got []runner.ReportMap
-			for reportMap := range reportChan {
-				got = append(got, reportMap)
+      got := runner.ReportMap{}
+      reportCount := 0
+      mutex := &sync.Mutex{}
+
+			for report := range reportChan {
+        mutex.Lock()
+        got[report.Path] = *report
+        mutex.Unlock()
+        reportCount += 1
 			}
 
-			if len(got) != c.numReports {
+			if reportCount != c.numReports {
 				t.Errorf("Want %d report maps, got %d", c.numReports, len(got))
 			}
 
 			if c.numReports > 0 {
-				finalReport := got[len(got)-1]
 				for path, wantStatus := range c.wantStatuses {
-					if finalReport[path].Status != wantStatus {
-						t.Errorf("Want status %v, got %v", wantStatus, finalReport[path].Status)
+					if got[path].Status != wantStatus {
+						t.Errorf("Want status %v, got %v", wantStatus, got[path].Status)
 					}
 				}
 			}

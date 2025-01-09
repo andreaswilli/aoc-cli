@@ -22,17 +22,14 @@ func NewRunner(fsys fs.FS, engineManager *engine.EngineManager) Runner {
 	return Runner{FS: fsys, EngineManager: engineManager}
 }
 
-func (r Runner) Run(path string) (reportChan chan ReportMap, err error) {
-	reportChan = make(chan ReportMap)
+func (r Runner) Run(path string) (reportChan chan *reporter.Report, err error) {
+	reportChan = make(chan *reporter.Report)
 	dirs, err := r.getDirs(path)
 
 	if err != nil {
 		close(reportChan)
 		return
 	}
-
-	reportMap := ReportMap{}
-	mutex := &sync.Mutex{}
 
 	wg := &sync.WaitGroup{}
 	wg.Add(len(dirs))
@@ -63,14 +60,8 @@ func (r Runner) Run(path string) (reportChan chan ReportMap, err error) {
 			defer wg.Done()
 			for result := range executor.Execute(cmd, &trigger.OneShotTrigger{}) {
 				expected := expectation.GetExpectation(dir, r.FS)
-
-				report := reporter.GetReport(result, expected)
-
-				mutex.Lock()
-				reportMap[dir] = report
-				mutex.Unlock()
-
-				reportChan <- reportMap
+				report := reporter.GetReport(dir, result, expected)
+				reportChan <- report
 			}
 		}()
 	}
