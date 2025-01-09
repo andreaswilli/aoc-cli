@@ -7,6 +7,7 @@ import (
 	"io"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/x/ansi"
 )
@@ -43,17 +44,22 @@ func (c *CLI) PrintReports(reports runner.ReportMap, hideLevel HideLevel) {
 	output += ansi.EraseDisplay(0)
 
 	for _, path := range sortedPaths(reports) {
-		if reports[path].Status == reporter.StatusPassed {
+		report := reports[path]
+		if report.Status == reporter.StatusPassed {
 			output += GreenBG + " PASSED " + Green
-		} else if reports[path].Status == reporter.StatusFailed {
+		} else if report.Status == reporter.StatusFailed {
 			output += RedBG + " FAILED " + Red
-		} else if reports[path].Status == reporter.StatusNoExp {
+		} else if report.Status == reporter.StatusNoExp {
 			output += BlueBG + " NO EXP " + Blue
-		} else if reports[path].Status == reporter.StatusExec {
+		} else if report.Status == reporter.StatusExec {
 			output += WhiteBG + "  EXEC  " + White
 		}
-		output += " " + path + "\n" + ResetColor
-		output += printDetails(hideLevel, reports[path].Result, reports[path].Expected)
+		output += " " + path
+		if report.Status != reporter.StatusExec {
+			output += Gray + " (" + report.Result.Duration.Round(10*time.Microsecond).String() + ")"
+		}
+		output += ResetColor + "\n"
+		output += printDetails(hideLevel, report.Result, report.Expected)
 	}
 
 	c.writtenLines = strings.Count(output, "\n")

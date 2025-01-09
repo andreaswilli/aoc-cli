@@ -41,6 +41,7 @@ var (
 )
 
 var reportStart = "\n" + ansi.CursorUp(0) + ansi.EraseDisplay(0)
+var duration = " (50.13ms)"
 
 func TestCLI_PrintReports(t *testing.T) {
 	cases := []struct {
@@ -54,14 +55,16 @@ func TestCLI_PrintReports(t *testing.T) {
 			runner.ReportMap{"2024/day_01": successfulReport},
 			cli.HidePassed,
 			reportStart +
-				cli.GreenBG + " PASSED " + cli.Green + " 2024/day_01\n" + cli.ResetColor,
+				cli.GreenBG + " PASSED " + cli.Green + " 2024/day_01" + cli.Gray +
+				duration + cli.ResetColor + "\n",
 		},
 		{
 			"print no additional newline if the result already ends in one",
 			runner.ReportMap{"2024/day_02": failedReportWithNewlines},
 			cli.HidePassed,
 			reportStart +
-				cli.RedBG + " FAILED " + cli.Red + " 2024/day_02\n" + cli.ResetColor +
+				cli.RedBG + " FAILED " + cli.Red + " 2024/day_02" + cli.Gray +
+				duration + cli.ResetColor + "\n" +
 				"\nExpected:\nthe result\n\nGot:\nthe wrong result\n\n",
 		},
 		{
@@ -74,10 +77,13 @@ func TestCLI_PrintReports(t *testing.T) {
 			},
 			cli.HideAll,
 			reportStart +
-				cli.GreenBG + " PASSED " + cli.Green + " 2024/day_01\n" + cli.ResetColor +
-				cli.RedBG + " FAILED " + cli.Red + " 2024/day_02\n" + cli.ResetColor +
-				cli.BlueBG + " NO EXP " + cli.Blue + " 2024/day_03\n" + cli.ResetColor +
-				cli.WhiteBG + "  EXEC  " + cli.White + " 2024/day_04\n" + cli.ResetColor,
+				cli.GreenBG + " PASSED " + cli.Green + " 2024/day_01" + cli.Gray +
+				duration + cli.ResetColor + "\n" +
+				cli.RedBG + " FAILED " + cli.Red + " 2024/day_02" + cli.Gray +
+				duration + cli.ResetColor + "\n" +
+				cli.BlueBG + " NO EXP " + cli.Blue + " 2024/day_03" + cli.Gray +
+				duration + cli.ResetColor + "\n" +
+				cli.WhiteBG + "  EXEC  " + cli.White + " 2024/day_04" + cli.ResetColor + "\n",
 		},
 		{
 			"print three different reports in alphabetical order with passed details hidden",
@@ -89,12 +95,15 @@ func TestCLI_PrintReports(t *testing.T) {
 			},
 			cli.HidePassed,
 			reportStart +
-				cli.GreenBG + " PASSED " + cli.Green + " 2024/day_01\n" + cli.ResetColor +
-				cli.RedBG + " FAILED " + cli.Red + " 2024/day_02\n" + cli.ResetColor +
+				cli.GreenBG + " PASSED " + cli.Green + " 2024/day_01" + cli.Gray +
+				duration + cli.ResetColor + "\n" +
+				cli.RedBG + " FAILED " + cli.Red + " 2024/day_02" + cli.Gray +
+				duration + cli.ResetColor + "\n" +
 				"\nExpected:\nthe result\n\nGot:\nthe wrong result\n\n" +
-				cli.BlueBG + " NO EXP " + cli.Blue + " 2024/day_03\n" + cli.ResetColor +
+				cli.BlueBG + " NO EXP " + cli.Blue + " 2024/day_03" + cli.Gray +
+				duration + cli.ResetColor + "\n" +
 				"\nthe result\n\n" +
-				cli.WhiteBG + "  EXEC  " + cli.White + " 2024/day_04\n" + cli.ResetColor,
+				cli.WhiteBG + "  EXEC  " + cli.White + " 2024/day_04" + cli.ResetColor + "\n",
 		},
 		{
 			"print three different reports in alphabetical order with no details hidden",
@@ -106,13 +115,16 @@ func TestCLI_PrintReports(t *testing.T) {
 			},
 			cli.HideNone,
 			reportStart +
-				cli.GreenBG + " PASSED " + cli.Green + " 2024/day_01\n" + cli.ResetColor +
+				cli.GreenBG + " PASSED " + cli.Green + " 2024/day_01" + cli.Gray +
+				duration + cli.ResetColor + "\n" +
 				"\nthe result\n\n" +
-				cli.RedBG + " FAILED " + cli.Red + " 2024/day_02\n" + cli.ResetColor +
+				cli.RedBG + " FAILED " + cli.Red + " 2024/day_02" + cli.Gray +
+				duration + cli.ResetColor + "\n" +
 				"\nExpected:\nthe result\n\nGot:\nthe wrong result\n\n" +
-				cli.BlueBG + " NO EXP " + cli.Blue + " 2024/day_03\n" + cli.ResetColor +
+				cli.BlueBG + " NO EXP " + cli.Blue + " 2024/day_03" + cli.Gray +
+				duration + cli.ResetColor + "\n" +
 				"\nthe result\n\n" +
-				cli.WhiteBG + "  EXEC  " + cli.White + " 2024/day_04\n" + cli.ResetColor,
+				cli.WhiteBG + "  EXEC  " + cli.White + " 2024/day_04" + cli.ResetColor + "\n",
 		},
 	}
 	for _, c := range cases {
@@ -133,7 +145,7 @@ func TestCLI_PrintReports(t *testing.T) {
 }
 
 func createSuccessResult(out string) *executor.Result {
-	return &executor.Result{Out: out, Err: nil, Duration: time.Millisecond}
+	return &executor.Result{Out: out, Err: nil, Duration: 50125 * time.Microsecond}
 }
 
 func createPendingResult() *executor.Result {
