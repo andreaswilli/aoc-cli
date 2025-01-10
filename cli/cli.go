@@ -33,9 +33,36 @@ const (
 	Gray       = "\033[37;27m"
 )
 
+type UserCmd struct {
+	Subcmd string
+	Path   string
+}
+
 type CLI struct {
+	Args         []string
 	Out          io.Writer
 	writtenLines int
+}
+
+func (c *CLI) GetUserCmd() *UserCmd {
+  if (len(c.Args) == 0) {
+    c.Out.Write([]byte("please provide a subcommand and a path to run\n"))
+    return nil
+  }
+
+  subcmd := c.Args[0]
+  if (subcmd != "run") {
+    c.Out.Write([]byte("unknown subcommand '" + subcmd + "'\n"))
+    return nil
+  }
+
+  if (len(c.Args) == 1) {
+    c.Out.Write([]byte("please provide a path to run\n"))
+    return nil
+  }
+
+  path := c.Args[1]
+	return &UserCmd{Subcmd: subcmd, Path: path}
 }
 
 func (c *CLI) PrintReports(reports runner.ReportMap, hideLevel HideLevel) {

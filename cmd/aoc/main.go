@@ -31,7 +31,7 @@ var (
 )
 
 func main() {
-	CLI := cli.CLI{Out: os.Stdout}
+  CLI := cli.CLI{Args: os.Args[1:], Out: os.Stdout}
 	filesystem := os.DirFS(".")
 	engineManager, err := engine.NewEngineManager(filesystem)
 
@@ -41,7 +41,13 @@ func main() {
 
 	r := runner.NewRunner(filesystem, engineManager)
 
-	reportChan, err := r.Run("2024")
+  userCmd := CLI.GetUserCmd()
+
+  if userCmd == nil {
+    os.Exit(1)
+  }
+
+	reportChan, err := r.Run(userCmd.Path)
 
 	if err != nil {
 		fmt.Printf("Unexpected error: %v", err)

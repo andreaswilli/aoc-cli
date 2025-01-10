@@ -6,6 +6,7 @@ import (
 	"aoc-cli/reporter"
 	"aoc-cli/runner"
 	"bytes"
+	"reflect"
 	"testing"
 	"time"
 
@@ -42,6 +43,56 @@ var (
 
 var reportStart = "\n" + ansi.CursorUp(0) + ansi.EraseDisplay(0)
 var duration = " (50.13ms)"
+
+func TestCLI_GetUserCmd(t *testing.T) {
+	cases := []struct {
+		name    string
+		args    []string
+		wantCmd *cli.UserCmd
+		wantOut string
+	}{
+    {
+      "return valid command",
+      []string{"run", "2024/day_01"},
+      &cli.UserCmd{"run", "2024/day_01"},
+      "",
+    },
+		{
+			"print error if no arguments are given",
+			[]string{},
+			nil,
+			"please provide a subcommand and a path to run\n",
+		},
+    {
+      "print error for unknown subcommand",
+      []string{"unknowncmd"},
+      nil,
+      "unknown subcommand 'unknowncmd'\n",
+    },
+    {
+      "print error if only one argument is given for valid subcommand",
+      []string{"run"},
+      nil,
+      "please provide a path to run\n",
+    },
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			out := new(bytes.Buffer)
+			cli := cli.CLI{Args: c.args, Out: out}
+
+			got := cli.GetUserCmd()
+
+			if !reflect.DeepEqual(got, c.wantCmd) {
+				t.Errorf("GetUserCmd() = %v, want %v", got, c.wantCmd)
+			}
+
+			if out.String() != c.wantOut {
+				t.Errorf("Got output: %q, want %q", out.String(), c.wantOut)
+			}
+		})
+	}
+}
 
 func TestCLI_PrintReports(t *testing.T) {
 	cases := []struct {
