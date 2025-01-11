@@ -59,7 +59,7 @@ some examples [here](cmd/aoc/aoc-cli.json).
       "entryFile": "solution.js"   // file name of the source file
     },
     {
-      ...
+      //...
     }
   ]
 }
