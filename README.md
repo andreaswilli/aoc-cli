@@ -5,10 +5,10 @@ convenient.
 
 ## Features
 
-- **Run multiple days** with a single command - even if they are implemented in
+- 👟 **Run multiple days** with a single command - even if they are implemented in
   **different languages**.
-- **Watch** the filesystem and re-run whenever changes are detected.
-- **Verify results** against the content of a file so you immediately know if
+- 👀 **Watch** the filesystem and re-run whenever changes are detected.
+- ✅ **Verify results** against the content of a file so you immediately know if
   a refactoring broke something.
 
 ## Installation
