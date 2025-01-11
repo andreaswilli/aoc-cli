@@ -47,8 +47,8 @@ Otherwise it should contain the expected output written to stdout by your code.
 
 ## Config File
 
-The config file is in JSON format and defines engines to run your code. Find
-some examples [here](cmd/aoc/aoc-cli.json).
+The config file `aoc-cli.json` has to be placed in the root of your project. It
+defines engines to run your code. Find some examples [here](cmd/aoc/aoc-cli.json).
 
 ```js
 {
