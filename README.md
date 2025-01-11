@@ -50,13 +50,13 @@ Otherwise it should contain the expected output written to stdout by your code.
 The config file is in JSON format and defines engines to run your code. Find
 some examples [here](cmd/aoc/aoc-cli.json).
 
-```json
+```js
 {
   "engines": [
     {
-      "name": "engine name (e.g. node)",
-      "cmd": "command to run, use placeholder {{entryFile}}",
-      "entryFile": "file name of the source file (e.g. solution.js)"
+      "name": "node",              // engine name, for display only
+      "cmd": "node {{entryFile}}", // command to run, use file name placeholder
+      "entryFile": "solution.js"   // file name of the source file
     },
     {
       ...
