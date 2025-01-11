@@ -16,7 +16,7 @@ convenient.
 Clone this repo and run `cd cmd/aoc && go install` from its root. This will
 make the `aoc` command available in your path.
 
-> ![Note]
+> [!NOTE]
 > Go needs to be installed on your system for this to work.
 
 ## Project Structure
@@ -48,7 +48,7 @@ Otherwise it should contain the expected output written to stdout by your code.
 ## Config File
 
 The config file is in JSON format and defines engines to run your code. Find
-some examples [here](cmd/aoc/2024/aoc-cli.json).
+some examples [here](cmd/aoc/aoc-cli.json).
 
 ```json
 {
