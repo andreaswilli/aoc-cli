@@ -38,7 +38,7 @@ func TestFsWatchTrigger_Listen(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			fsWatcher := fswatcher.FsWatcher{
+			fsWatcher := &fswatcher.FsWatcher{
 				FS: mapFS,
 				WatchPaths: c.watchPaths,
 				CheckInterval: time.Millisecond,

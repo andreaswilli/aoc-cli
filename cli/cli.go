@@ -5,6 +5,7 @@ import (
 	"aoc-cli/reporter"
 	"aoc-cli/runner"
 	"io"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -34,7 +35,7 @@ const (
 )
 
 type UserCmd struct {
-	Subcmd string
+	SubCmd string
 	Path   string
 }
 
@@ -44,25 +45,32 @@ type CLI struct {
 	writtenLines int
 }
 
+const (
+	SubCmdRun   = "run"
+	SubCmdWatch = "watch"
+)
+
+var subCmds = []string{SubCmdRun, SubCmdWatch}
+
 func (c *CLI) GetUserCmd() *UserCmd {
-  if (len(c.Args) == 0) {
-    c.Out.Write([]byte("please provide a subcommand and a path to run\n"))
-    return nil
-  }
+	if len(c.Args) == 0 {
+		c.Out.Write([]byte("please provide a subcommand and a path to run\n"))
+		return nil
+	}
 
-  subcmd := c.Args[0]
-  if (subcmd != "run") {
-    c.Out.Write([]byte("unknown subcommand '" + subcmd + "'\n"))
-    return nil
-  }
+	subCmd := c.Args[0]
+	if !slices.Contains(subCmds, subCmd) {
+		c.Out.Write([]byte("unknown subcommand '" + subCmd + "'\n"))
+		return nil
+	}
 
-  if (len(c.Args) == 1) {
-    c.Out.Write([]byte("please provide a path to run\n"))
-    return nil
-  }
+	if len(c.Args) == 1 {
+		c.Out.Write([]byte("please provide a path to run\n"))
+		return nil
+	}
 
-  path := c.Args[1]
-	return &UserCmd{Subcmd: subcmd, Path: path}
+	path := c.Args[1]
+	return &UserCmd{SubCmd: subCmd, Path: path}
 }
 
 func (c *CLI) PrintReports(reports runner.ReportMap, hideLevel HideLevel) {

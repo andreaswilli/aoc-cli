@@ -4,11 +4,13 @@ import (
 	"aoc-cli/engine"
 	"aoc-cli/executor"
 	"aoc-cli/expectation"
+	fswatcher "aoc-cli/fs_watcher"
 	"aoc-cli/reporter"
 	"aoc-cli/trigger"
 	"io/fs"
 	"strings"
 	"sync"
+	"time"
 )
 
 type ReportMap map[string]reporter.Report
@@ -23,6 +25,20 @@ func NewRunner(fsys fs.FS, engineManager *engine.EngineManager) Runner {
 }
 
 func (r Runner) Run(path string) (reportChan chan *reporter.Report, err error) {
+	return r.run(path, r.createOneShotTrigger)
+}
+
+func (r Runner) Watch(path string) (reportChan chan *reporter.Report, err error) {
+	return r.run(path, r.createFsWatchTrigger)
+}
+
+func (r Runner) run(
+	path string,
+	createTrigger func(path string) trigger.Trigger,
+) (
+	reportChan chan *reporter.Report,
+	err error,
+) {
 	reportChan = make(chan *reporter.Report)
 	dirs, err := r.getDirs(path)
 
@@ -58,7 +74,7 @@ func (r Runner) Run(path string) (reportChan chan *reporter.Report, err error) {
 
 		go func() {
 			defer wg.Done()
-			for result := range executor.Execute(cmd, &trigger.OneShotTrigger{}) {
+			for result := range executor.Execute(cmd, createTrigger(dir)) {
 				expected := expectation.GetExpectation(dir, r.FS)
 				report := reporter.GetReport(dir, result, expected)
 				reportChan <- report
@@ -92,4 +108,17 @@ func (r Runner) getDirs(path string) ([]string, error) {
 	}
 
 	return dirs, nil
+}
+
+func (r Runner) createOneShotTrigger(path string) trigger.Trigger {
+	return &trigger.OneShotTrigger{}
+}
+
+func (r Runner) createFsWatchTrigger(path string) trigger.Trigger {
+  fsWatcher := &fswatcher.FsWatcher{
+  	FS: r.FS,
+  	WatchPaths: []string{path},
+  	CheckInterval: time.Second,
+  }
+  return &trigger.FsWatchTrigger{FsWatcher: fsWatcher}
 }
