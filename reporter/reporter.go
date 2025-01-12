@@ -12,14 +12,20 @@ const (
 )
 
 type Report struct {
-	Path     string
-	Result   *executor.Result
-	Expected string
-	Status   Status
+	Path       string
+	EngineName string
+	Result     *executor.Result
+	Expected   string
+	Status     Status
 }
 
-func GetReport(path string, result *executor.Result, expected string) (report *Report) {
-	report = &Report{path, result, expected, StatusFailed}
+func GetReport(
+	path string,
+	engineName string,
+	result *executor.Result,
+	expected string,
+) (report *Report) {
+	report = &Report{path, engineName, result, expected, StatusFailed}
 
 	if result.Err != nil {
 		return

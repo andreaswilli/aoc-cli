@@ -76,7 +76,7 @@ func (r Runner) run(
 			defer wg.Done()
 			for result := range executor.Execute(cmd, createTrigger(dir)) {
 				expected := expectation.GetExpectation(dir, r.FS)
-				report := reporter.GetReport(dir, result, expected)
+				report := reporter.GetReport(dir, engine.Name, result, expected)
 				reportChan <- report
 			}
 		}()

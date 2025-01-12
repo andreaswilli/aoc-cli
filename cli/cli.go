@@ -89,10 +89,11 @@ func (c *CLI) PrintReports(reports runner.ReportMap, hideLevel HideLevel) {
 		} else if report.Status == reporter.StatusExec {
 			output += WhiteBG + "  EXEC  " + White
 		}
-		output += " " + path
+		output += " " + path + Gray
 		if report.Status != reporter.StatusExec {
-			output += Gray + " (" + report.Result.Duration.Round(10*time.Microsecond).String() + ")"
+			output += " (" + report.Result.Duration.Round(10*time.Microsecond).String() + ")"
 		}
+		output += " [" + report.EngineName + "]"
 		output += ResetColor + "\n"
 		output += printDetails(hideLevel, report.Result, report.Expected)
 	}

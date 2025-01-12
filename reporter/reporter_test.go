@@ -56,8 +56,9 @@ func TestGetReport(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			report := reporter.GetReport("2024/day_01", c.inResult, c.want)
+			report := reporter.GetReport("2024/day_01", "node", c.inResult, c.want)
       assertEqual(t, report.Path, "2024/day_01")
+      assertEqual(t, report.EngineName, "node")
       assertEqual(t, report.Status, c.expectedStatus)
 		})
 	}

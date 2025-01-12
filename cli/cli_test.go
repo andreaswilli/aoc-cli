@@ -15,34 +15,43 @@ import (
 
 var (
 	successfulReport = reporter.Report{
-		Result:   createSuccessResult("the result"),
-		Expected: "the result",
-		Status:   reporter.StatusPassed,
+		EngineName: "node",
+		Result:     createSuccessResult("the result"),
+		Expected:   "the result",
+		Status:     reporter.StatusPassed,
 	}
 	failedReport = reporter.Report{
-		Result:   createSuccessResult("the wrong result"),
-		Expected: "the result",
-		Status:   reporter.StatusFailed,
+		EngineName: "python",
+		Result:     createSuccessResult("the wrong result"),
+		Expected:   "the result",
+		Status:     reporter.StatusFailed,
 	}
 	failedReportWithNewlines = reporter.Report{
-		Result:   createSuccessResult(failedReport.Result.Out + "\n"),
-		Expected: failedReport.Expected + "\n",
-		Status:   failedReport.Status,
+		EngineName: "go",
+		Result:     createSuccessResult(failedReport.Result.Out + "\n"),
+		Expected:   failedReport.Expected + "\n",
+		Status:     failedReport.Status,
 	}
 	noExpReport = reporter.Report{
-		Result:   createSuccessResult("the result"),
-		Expected: "",
-		Status:   reporter.StatusNoExp,
+		EngineName: "nix",
+		Result:     createSuccessResult("the result"),
+		Expected:   "",
+		Status:     reporter.StatusNoExp,
 	}
 	pendingReport = reporter.Report{
-		Result:   createPendingResult(),
-		Expected: "the result",
-		Status:   reporter.StatusExec,
+		EngineName: "cpp",
+		Result:     createPendingResult(),
+		Expected:   "the result",
+		Status:     reporter.StatusExec,
 	}
 )
 
 var reportStart = "\n" + ansi.CursorUp(0) + ansi.EraseDisplay(0)
 var duration = " (50.13ms)"
+
+func engine(name string) string {
+	return " [" + name + "]"
+}
 
 func TestCLI_GetUserCmd(t *testing.T) {
 	cases := []struct {
@@ -51,30 +60,30 @@ func TestCLI_GetUserCmd(t *testing.T) {
 		wantCmd *cli.UserCmd
 		wantOut string
 	}{
-    {
-      "return valid command",
-      []string{"run", "2024/day_01"},
-      &cli.UserCmd{"run", "2024/day_01"},
-      "",
-    },
+		{
+			"return valid command",
+			[]string{"run", "2024/day_01"},
+			&cli.UserCmd{"run", "2024/day_01"},
+			"",
+		},
 		{
 			"print error if no arguments are given",
 			[]string{},
 			nil,
 			"please provide a subcommand and a path to run\n",
 		},
-    {
-      "print error for unknown subcommand",
-      []string{"unknowncmd"},
-      nil,
-      "unknown subcommand 'unknowncmd'\n",
-    },
-    {
-      "print error if only one argument is given for valid subcommand",
-      []string{"run"},
-      nil,
-      "please provide a path to run\n",
-    },
+		{
+			"print error for unknown subcommand",
+			[]string{"unknowncmd"},
+			nil,
+			"unknown subcommand 'unknowncmd'\n",
+		},
+		{
+			"print error if only one argument is given for valid subcommand",
+			[]string{"run"},
+			nil,
+			"please provide a path to run\n",
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -107,7 +116,7 @@ func TestCLI_PrintReports(t *testing.T) {
 			cli.HidePassed,
 			reportStart +
 				cli.GreenBG + " PASSED " + cli.Green + " 2024/day_01" + cli.Gray +
-				duration + cli.ResetColor + "\n",
+				duration + engine("node") + cli.ResetColor + "\n",
 		},
 		{
 			"print no additional newline if the result already ends in one",
@@ -115,7 +124,7 @@ func TestCLI_PrintReports(t *testing.T) {
 			cli.HidePassed,
 			reportStart +
 				cli.RedBG + " FAILED " + cli.Red + " 2024/day_02" + cli.Gray +
-				duration + cli.ResetColor + "\n" +
+				duration + engine("go") + cli.ResetColor + "\n" +
 				"\nExpected:\nthe result\n\nGot:\nthe wrong result\n\n",
 		},
 		{
@@ -129,12 +138,13 @@ func TestCLI_PrintReports(t *testing.T) {
 			cli.HideAll,
 			reportStart +
 				cli.GreenBG + " PASSED " + cli.Green + " 2024/day_01" + cli.Gray +
-				duration + cli.ResetColor + "\n" +
+				duration + engine("node") + cli.ResetColor + "\n" +
 				cli.RedBG + " FAILED " + cli.Red + " 2024/day_02" + cli.Gray +
-				duration + cli.ResetColor + "\n" +
+				duration + engine("python") + cli.ResetColor + "\n" +
 				cli.BlueBG + " NO EXP " + cli.Blue + " 2024/day_03" + cli.Gray +
-				duration + cli.ResetColor + "\n" +
-				cli.WhiteBG + "  EXEC  " + cli.White + " 2024/day_04" + cli.ResetColor + "\n",
+				duration + engine("nix") + cli.ResetColor + "\n" +
+				cli.WhiteBG + "  EXEC  " + cli.White + " 2024/day_04" + cli.Gray +
+				engine("cpp") + cli.ResetColor + "\n",
 		},
 		{
 			"print three different reports in alphabetical order with passed details hidden",
@@ -147,14 +157,15 @@ func TestCLI_PrintReports(t *testing.T) {
 			cli.HidePassed,
 			reportStart +
 				cli.GreenBG + " PASSED " + cli.Green + " 2024/day_01" + cli.Gray +
-				duration + cli.ResetColor + "\n" +
+				duration + engine("node") + cli.ResetColor + "\n" +
 				cli.RedBG + " FAILED " + cli.Red + " 2024/day_02" + cli.Gray +
-				duration + cli.ResetColor + "\n" +
+				duration + engine("python") + cli.ResetColor + "\n" +
 				"\nExpected:\nthe result\n\nGot:\nthe wrong result\n\n" +
 				cli.BlueBG + " NO EXP " + cli.Blue + " 2024/day_03" + cli.Gray +
-				duration + cli.ResetColor + "\n" +
+				duration + engine("nix") + cli.ResetColor + "\n" +
 				"\nthe result\n\n" +
-				cli.WhiteBG + "  EXEC  " + cli.White + " 2024/day_04" + cli.ResetColor + "\n",
+				cli.WhiteBG + "  EXEC  " + cli.White + " 2024/day_04" + cli.Gray +
+				engine("cpp") + cli.ResetColor + "\n",
 		},
 		{
 			"print three different reports in alphabetical order with no details hidden",
@@ -167,15 +178,16 @@ func TestCLI_PrintReports(t *testing.T) {
 			cli.HideNone,
 			reportStart +
 				cli.GreenBG + " PASSED " + cli.Green + " 2024/day_01" + cli.Gray +
-				duration + cli.ResetColor + "\n" +
+				duration + engine("node") + cli.ResetColor + "\n" +
 				"\nthe result\n\n" +
 				cli.RedBG + " FAILED " + cli.Red + " 2024/day_02" + cli.Gray +
-				duration + cli.ResetColor + "\n" +
+				duration + engine("python") + cli.ResetColor + "\n" +
 				"\nExpected:\nthe result\n\nGot:\nthe wrong result\n\n" +
 				cli.BlueBG + " NO EXP " + cli.Blue + " 2024/day_03" + cli.Gray +
-				duration + cli.ResetColor + "\n" +
+				duration + engine("nix") + cli.ResetColor + "\n" +
 				"\nthe result\n\n" +
-				cli.WhiteBG + "  EXEC  " + cli.White + " 2024/day_04" + cli.ResetColor + "\n",
+				cli.WhiteBG + "  EXEC  " + cli.White + " 2024/day_04" + cli.Gray +
+				engine("cpp") + cli.ResetColor + "\n",
 		},
 	}
 	for _, c := range cases {
