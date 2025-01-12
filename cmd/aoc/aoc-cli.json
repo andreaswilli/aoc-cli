@@ -3,22 +3,26 @@
     {
       "name": "node",
       "cmd": "node {{entryFile}}",
-      "entryFile": "solution.js"
+      "entryFile": "solution.js",
+      "extraFiles": ["lib/node"]
     },
     {
       "name": "python",
       "cmd": "python {{entryFile}}",
-      "entryFile": "solution.py"
+      "entryFile": "solution.py",
+      "extraFiles": ["lib/python"]
     },
     {
       "name": "go",
       "cmd": "go run {{entryFile}}",
-      "entryFile": "solution.go"
+      "entryFile": "solution.go",
+      "extraFiles": ["lib/go"]
     },
     {
       "name": "nix",
       "cmd": "nix eval --quiet --experimental-features pipe-operator --extra-experimental-features nix-command --extra-experimental-features flakes --file {{entryFile}}",
-      "entryFile": "solution.nix"
+      "entryFile": "solution.nix",
+      "extraFiles": ["lib/nix"]
     }
   ]
 }

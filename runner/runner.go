@@ -34,7 +34,7 @@ func (r Runner) Watch(path string) (reportChan chan *reporter.Report, err error)
 
 func (r Runner) run(
 	path string,
-	createTrigger func(path string) trigger.Trigger,
+	createTrigger func(paths []string) trigger.Trigger,
 ) (
 	reportChan chan *reporter.Report,
 	err error,
@@ -74,7 +74,8 @@ func (r Runner) run(
 
 		go func() {
 			defer wg.Done()
-			for result := range executor.Execute(cmd, createTrigger(dir)) {
+			paths := append(engine.ExtraFiles, dir)
+			for result := range executor.Execute(cmd, createTrigger(paths)) {
 				expected := expectation.GetExpectation(dir, r.FS)
 				report := reporter.GetReport(dir, engine.Name, result, expected)
 				reportChan <- report
@@ -110,15 +111,15 @@ func (r Runner) getDirs(path string) ([]string, error) {
 	return dirs, nil
 }
 
-func (r Runner) createOneShotTrigger(path string) trigger.Trigger {
+func (r Runner) createOneShotTrigger(paths []string) trigger.Trigger {
 	return &trigger.OneShotTrigger{}
 }
 
-func (r Runner) createFsWatchTrigger(path string) trigger.Trigger {
-  fsWatcher := &fswatcher.FsWatcher{
-  	FS: r.FS,
-  	WatchPaths: []string{path},
-  	CheckInterval: time.Second,
-  }
-  return &trigger.FsWatchTrigger{FsWatcher: fsWatcher}
+func (r Runner) createFsWatchTrigger(paths []string) trigger.Trigger {
+	fsWatcher := &fswatcher.FsWatcher{
+		FS:            r.FS,
+		WatchPaths:    paths,
+		CheckInterval: time.Second,
+	}
+	return &trigger.FsWatchTrigger{FsWatcher: fsWatcher}
 }

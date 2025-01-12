@@ -49,13 +49,19 @@ func TestFsWatcher_WaitForAnyChange(t *testing.T) {
 			"",
 			false,
 		},
+		{
+			"silently ignore non-existent watched path",
+			[]string{"2024/nonexistent/solution.js"},
+			"",
+			false,
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			watcher := fswatcher.FsWatcher{
-				FS:         mapFS,
-				WatchPaths: c.watchPaths,
-				CheckInterval:   time.Millisecond,
+				FS:            mapFS,
+				WatchPaths:    c.watchPaths,
+				CheckInterval: time.Millisecond,
 			}
 
 			doneChan := make(chan bool)
@@ -77,10 +83,11 @@ func TestFsWatcher_WaitForAnyChange(t *testing.T) {
 
 			select {
 			case <-doneChan:
-				if !c.shouldRegisterChange {
-					t.Error("should not register change but did")
-				}
-				if err != nil {
+				if err == nil {
+					if !c.shouldRegisterChange {
+						t.Error("should not register change but did")
+					}
+				} else {
 					t.Errorf("Unexpected error: %v", err)
 				}
 			case <-time.After(100 * time.Millisecond):

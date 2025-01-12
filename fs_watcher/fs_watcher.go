@@ -1,14 +1,15 @@
 package fswatcher
 
 import (
+	"errors"
 	"io/fs"
 	"time"
 )
 
 type FsWatcher struct {
-	FS         fs.FS
-	WatchPaths []string
-	CheckInterval   time.Duration
+	FS            fs.FS
+	WatchPaths    []string
+	CheckInterval time.Duration
 }
 
 func (f *FsWatcher) WaitForAnyChange() error {
@@ -51,8 +52,13 @@ func (f *FsWatcher) getStats() (map[string]fs.FileInfo, error) {
 	statsMap := make(map[string]fs.FileInfo)
 	for _, path := range f.WatchPaths {
 		stat, err := fs.Stat(f.FS, path)
+
 		if err != nil {
-			return nil, err
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			} else {
+				return nil, err
+			}
 		}
 
 		if stat.IsDir() {

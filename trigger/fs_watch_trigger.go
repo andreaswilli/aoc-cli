@@ -12,7 +12,12 @@ func (t *FsWatchTrigger) Listen() chan bool {
 	go func() {
     for {
       nextChan <- true
-      t.FsWatcher.WaitForAnyChange()
+      err := t.FsWatcher.WaitForAnyChange()
+
+      if (err != nil) {
+        close(nextChan)
+        break
+      }
     }
 	}()
 

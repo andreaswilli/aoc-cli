@@ -33,6 +33,9 @@ advent-of-code/
 │  │  ├─ expected.txt
 │  │  ├─ solution.py
 │  ├─ ...
+├─ lib/
+│  ├─ node/
+│  ├─ ...
 ├─ aoc-cli.json
 ```
 
@@ -44,6 +47,9 @@ The names of the files containing the source code need to be configured (see
 
 The file `expected.txt` can be omitted if the output should not be checked.
 Otherwise it should contain the expected output written to stdout by your code.
+
+The `lib` directory is just an example, any additional paths can be configured
+to watch (see [Config File](#config-file)).
 
 ## Config File
 
@@ -57,6 +63,7 @@ defines engines to run your code. Find some examples [here](cmd/aoc/aoc-cli.json
       "name": "node",              // engine name, for display only
       "cmd": "node {{entryFile}}", // command to run, use file name placeholder
       "entryFile": "solution.js"   // file name of the source file
+      "extraFiles": ["lib/node"]   // additional paths that should be watched
     },
     {
       //...

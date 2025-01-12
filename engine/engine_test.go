@@ -10,20 +10,22 @@ import (
 
 func TestEngine_GetCmd(t *testing.T) {
 	cases := []struct {
-		testName  string
-		name      string
-		cmd       string
-		entryFile string
-		path      string
-		want      *exec.Cmd
-		wantErr   error
+		testName   string
+		name       string
+		cmd        string
+		entryFile  string
+		extraFiles []string
+		path       string
+		want       *exec.Cmd
+		wantErr    error
 	}{
 		{
 			"parse command and use entry file",
 			"node",
 			"node {{entryFile}}",
 			"index.js",
-      "2024/day_01",
+      []string{},
+			"2024/day_01",
 			exec.Command("node", "2024/day_01/index.js"),
 			nil,
 		},
@@ -32,14 +34,15 @@ func TestEngine_GetCmd(t *testing.T) {
 			"node",
 			"",
 			"index.js",
-      "2024/day_01",
+      []string{},
+			"2024/day_01",
 			nil,
 			errors.New("invalid command"),
 		},
 	}
 	for _, c := range cases {
 		t.Run(c.testName, func(t *testing.T) {
-			e := engine.Engine{c.name, c.cmd, c.entryFile}
+			e := engine.Engine{c.name, c.cmd, c.entryFile, c.extraFiles}
 			got, err := e.GetCmd(c.path)
 
 			if err != nil && c.wantErr == nil {
