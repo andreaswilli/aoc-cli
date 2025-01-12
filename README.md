@@ -49,7 +49,7 @@ The file `expected.txt` can be omitted if the output should not be checked.
 Otherwise it should contain the expected output written to stdout by your code.
 
 The `lib` directory is just an example, any additional paths can be configured
-to watch (see [Config File](#config-file)).
+to be watched (see [Config File](#config-file)).
 
 ## Config File
 
