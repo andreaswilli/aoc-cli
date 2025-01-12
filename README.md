@@ -62,7 +62,7 @@ defines engines to run your code. Find some examples [here](cmd/aoc/aoc-cli.json
     {
       "name": "node",              // engine name, for display only
       "cmd": "node {{entryFile}}", // command to run, use file name placeholder
-      "entryFile": "solution.js"   // file name of the source file
+      "entryFile": "solution.js",  // file name of the source file
       "extraFiles": ["lib/node"]   // additional paths that should be watched
     },
     {
